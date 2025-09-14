@@ -18,6 +18,9 @@ import com.ml.shubham0204.docqa.ui.screens.chat.ChatViewModel
 import com.ml.shubham0204.docqa.ui.screens.docs.DocsScreen
 import com.ml.shubham0204.docqa.ui.screens.docs.DocsViewModel
 import com.ml.shubham0204.docqa.ui.screens.edit_api_key.EditAPIKeyScreen
+import com.ml.shubham0204.docqa.ui.screens.local_models.LocalModelsScreen
+import com.ml.shubham0204.docqa.ui.screens.local_models.LocalModelsUIState
+import com.ml.shubham0204.docqa.ui.screens.local_models.LocalModelsViewModel
 import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
 
@@ -29,6 +32,9 @@ object EditAPIKeyRoute
 
 @Serializable
 object DocsRoute
+
+@Serializable
+object LocalModelsRoute
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,6 +59,16 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 composable<EditAPIKeyRoute> { EditAPIKeyScreen(onBackClick = { navHostController.navigateUp() }) }
+                composable<LocalModelsRoute> { backStackEntry ->
+                    val viewModel: LocalModelsViewModel =
+                        koinViewModel(viewModelStoreOwner = backStackEntry)
+                    val uiState by viewModel.uiState.collectAsState()
+                    LocalModelsScreen(
+                        uiState = uiState,
+                        onEvent = viewModel::onEvent,
+                        onBackClick = { navHostController.navigateUp() },
+                    )
+                }
                 composable<ChatRoute> { backStackEntry ->
                     val viewModel: ChatViewModel =
                         koinViewModel(viewModelStoreOwner = backStackEntry)
@@ -66,6 +82,10 @@ class MainActivity : ComponentActivity() {
 
                             is ChatNavEvent.ToEditAPIKeyScreen -> {
                                 navHostController.navigate(EditAPIKeyRoute)
+                            }
+
+                            is ChatNavEvent.ToLocalModelsScreen -> {
+                                navHostController.navigate(LocalModelsRoute)
                             }
 
                             is ChatNavEvent.None -> {}

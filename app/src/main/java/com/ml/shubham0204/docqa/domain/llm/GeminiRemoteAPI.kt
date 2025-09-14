@@ -1,4 +1,4 @@
-package com.ml.shubham0204.docqa.domain
+package com.ml.shubham0204.docqa.domain.llm
 
 import android.util.Log
 import com.google.ai.client.generativeai.GenerativeModel
@@ -9,7 +9,7 @@ import kotlinx.coroutines.withContext
 
 class GeminiRemoteAPI(
     private val apiKey: String,
-) {
+) : LLMInferenceAPI() {
     private val generativeModel: GenerativeModel
 
     init {
@@ -22,7 +22,7 @@ class GeminiRemoteAPI(
         configBuilder.temperature = 0.3f
         generativeModel =
             GenerativeModel(
-                modelName = "gemini-1.5-flash",
+                modelName = "gemini-2.5-flash",
                 apiKey = apiKey,
                 generationConfig = configBuilder.build(),
                 systemInstruction =
@@ -34,7 +34,7 @@ class GeminiRemoteAPI(
             )
     }
 
-    suspend fun getResponse(prompt: String): String? =
+    override suspend fun getResponse(prompt: String): String? =
         withContext(Dispatchers.IO) {
             Log.e("APP", "Prompt given: $prompt")
             val response = generativeModel.generateContent(prompt)

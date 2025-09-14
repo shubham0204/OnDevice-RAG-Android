@@ -10,8 +10,10 @@ import com.ml.shubham0204.docqa.data.ChunksDB
 import com.ml.shubham0204.docqa.data.DocumentsDB
 import com.ml.shubham0204.docqa.data.GeminiAPIKey
 import com.ml.shubham0204.docqa.data.RetrievedContext
-import com.ml.shubham0204.docqa.domain.GeminiRemoteAPI
 import com.ml.shubham0204.docqa.domain.SentenceEmbeddingProvider
+import com.ml.shubham0204.docqa.domain.llm.GeminiRemoteAPI
+import com.ml.shubham0204.docqa.domain.llm.LLMInferenceAPI
+import com.ml.shubham0204.docqa.domain.llm.LiteRTAPI
 import com.ml.shubham0204.docqa.ui.components.createAlertDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +28,8 @@ sealed interface ChatScreenUIEvent {
     data object OnEditAPIKeyClick : ChatScreenUIEvent
 
     data object OnOpenDocsClick : ChatScreenUIEvent
+
+    data object OnLocalModelsClick : ChatScreenUIEvent
 
     sealed class ResponseGeneration {
         data class Start(
@@ -50,6 +54,8 @@ sealed interface ChatNavEvent {
     data object ToEditAPIKeyScreen : ChatNavEvent
 
     data object ToDocsScreen : ChatNavEvent
+
+    data object ToLocalModelsScreen : ChatNavEvent
 }
 
 data class ChatScreenUIState(
@@ -66,6 +72,7 @@ class ChatViewModel(
     private val chunksDB: ChunksDB,
     private val geminiAPIKey: GeminiAPIKey,
     private val sentenceEncoder: SentenceEmbeddingProvider,
+    private val liteRTAPI: LiteRTAPI,
 ) : ViewModel() {
     private val _chatScreenUIState = MutableStateFlow(ChatScreenUIState())
     val chatScreenUIState: StateFlow<ChatScreenUIState> = _chatScreenUIState
@@ -113,7 +120,17 @@ class ChatViewModel(
                     _chatScreenUIState.value.copy(isGeneratingResponse = true)
                 _chatScreenUIState.value =
                     _chatScreenUIState.value.copy(question = event.query)
-                getAnswer(event.query, event.prompt)
+
+                val llm =
+                    if (liteRTAPI.isLoaded) {
+                        Toast.makeText(context, "Using local model...", Toast.LENGTH_LONG).show()
+                        liteRTAPI
+                    } else {
+                        val apiKey = geminiAPIKey.getAPIKey() ?: throw Exception("Gemini API key is null")
+                        Toast.makeText(context, "Using Gemini cloud model...", Toast.LENGTH_LONG).show()
+                        GeminiRemoteAPI(apiKey)
+                    }
+                getAnswer(llm, event.query, event.prompt)
             }
 
             is ChatScreenUIEvent.ResponseGeneration.StopWithSuccess -> {
@@ -141,15 +158,20 @@ class ChatViewModel(
                     _navEventChannel.send(ChatNavEvent.ToEditAPIKeyScreen)
                 }
             }
+
+            is ChatScreenUIEvent.OnLocalModelsClick -> {
+                viewModelScope.launch {
+                    _navEventChannel.send(ChatNavEvent.ToLocalModelsScreen)
+                }
+            }
         }
     }
 
     private fun getAnswer(
+        llm: LLMInferenceAPI,
         query: String,
         prompt: String,
     ) {
-        val apiKey = geminiAPIKey.getAPIKey() ?: throw Exception("Gemini API key is null")
-        val geminiRemoteAPI = GeminiRemoteAPI(apiKey)
         try {
             var jointContext = ""
             val retrievedContextList = ArrayList<RetrievedContext>()
@@ -165,7 +187,7 @@ class ChatViewModel(
             }
             val inputPrompt = prompt.replace("\$CONTEXT", jointContext).replace("\$QUERY", query)
             CoroutineScope(Dispatchers.IO).launch {
-                geminiRemoteAPI.getResponse(inputPrompt)?.let { llmResponse ->
+                llm.getResponse(inputPrompt)?.let { llmResponse ->
                     onChatScreenEvent(
                         ChatScreenUIEvent.ResponseGeneration.StopWithSuccess(
                             llmResponse,

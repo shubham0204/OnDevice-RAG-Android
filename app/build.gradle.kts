@@ -110,7 +110,12 @@ dependencies {
     ksp(libs.koin.ksp.compiler)
 
     // For secured/encrypted shared preferences
-    implementation("androidx.security:security-crypto:1.1.0-alpha07")
+    implementation("androidx.security:security-crypto:1.1.0")
+
+    implementation("com.github.khushpanchal:Ketch:2.0.5")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    implementation("com.google.mediapipe:tasks-genai:0.10.27")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

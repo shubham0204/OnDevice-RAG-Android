@@ -1,6 +1,7 @@
 package com.ml.shubham0204.docqa.ui.screens.chat
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material3.DropdownMenu
@@ -26,6 +27,14 @@ fun ChatScreenMoreOptionsPopup(
             icon = Icons.Default.Key,
             onItemClick = {
                 onItemClick(ChatScreenUIEvent.OnEditAPIKeyClick)
+                onDismissRequest()
+            },
+        )
+        OptionsPopupItem(
+            title = "Manage Local Models",
+            icon = Icons.Default.Download,
+            onItemClick = {
+                onItemClick(ChatScreenUIEvent.OnLocalModelsClick)
                 onDismissRequest()
             },
         )
