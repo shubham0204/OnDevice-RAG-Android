@@ -41,11 +41,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
     buildFeatures {
         compose = true
@@ -115,7 +115,7 @@ dependencies {
     implementation("com.github.khushpanchal:Ketch:2.0.5")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
-    implementation("com.google.mediapipe:tasks-genai:0.10.27")
+    implementation("com.google.mediapipe:tasks-genai:0.10.29")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
