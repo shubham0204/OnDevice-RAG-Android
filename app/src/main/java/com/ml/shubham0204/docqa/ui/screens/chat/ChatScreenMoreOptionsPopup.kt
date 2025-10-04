@@ -23,10 +23,10 @@ fun ChatScreenMoreOptionsPopup(
         onDismissRequest = onDismissRequest,
     ) {
         OptionsPopupItem(
-            title = "Edit Gemini API Key",
+            title = "Edit Credentials",
             icon = Icons.Default.Key,
             onItemClick = {
-                onItemClick(ChatScreenUIEvent.OnEditAPIKeyClick)
+                onItemClick(ChatScreenUIEvent.OnEditCredentialsClick)
                 onDismissRequest()
             },
         )

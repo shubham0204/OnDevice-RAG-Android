@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ketch.Ketch
 import com.ketch.Status
+import com.ml.shubham0204.docqa.data.HFAccessToken
 import com.ml.shubham0204.docqa.data.LocalModel
 import com.ml.shubham0204.docqa.domain.llm.LiteRTAPI
 import kotlinx.coroutines.Dispatchers
@@ -47,6 +48,7 @@ data class DownloadModelDialogUIState(
 class LocalModelsViewModel(
     private val context: Context,
     private val liteRTAPI: LiteRTAPI,
+    private val hfAccessToken: HFAccessToken,
 ) : ViewModel() {
     private val _uiState =
         MutableStateFlow(
@@ -77,6 +79,26 @@ class LocalModelsViewModel(
                             name = "DeepSeek R1 Distill Qwen 1.5B Q8",
                             description = "DeepSeek R1",
                             downloadUrl = "https://huggingface.co/litert-community/DeepSeek-R1-Distill-Qwen-1.5B/resolve/main/DeepSeek-R1-Distill-Qwen-1.5B_multi-prefill-seq_q8_ekv4096.task",
+                        ),
+                        LocalModel(
+                            name = "Gemma3 1B IT",
+                            description = "Gemma 3 1B Instruction-Tuned (gated model)",
+                            downloadUrl = "https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/Gemma3-1B-IT_multi-prefill-seq_q8_ekv4096.task",
+                        ),
+                        LocalModel(
+                            name = "Gemma3 4B IT",
+                            description = "Gemma 3 4B Instruction-Tuned (gated model)",
+                            downloadUrl = "https://huggingface.co/litert-community/Gemma3-4B-IT/resolve/main/gemma3-4b-it-int8-web.task",
+                        ),
+                        LocalModel(
+                            name = "Llama 3.2 1B Q8",
+                            description = "Llama 3.2 1B (gated model)",
+                            downloadUrl = "https://huggingface.co/litert-community/Llama-3.2-1B-Instruct/resolve/main/Llama-3.2-1B-Instruct_multi-prefill-seq_q8_ekv1280.task",
+                        ),
+                        LocalModel(
+                            name = "Llama 3.2 3B Q8",
+                            description = "Llama 3.2 3B (gated model)",
+                            downloadUrl = "https://huggingface.co/litert-community/Llama-3.2-3B-Instruct/resolve/main/Llama-3.2-3B-Instruct_multi-prefill-seq_q8_ekv1280.task",
                         ),
                     ),
             ),
@@ -139,11 +161,20 @@ class LocalModelsViewModel(
         }
 
     private suspend fun downloadModel(model: LocalModel) {
+        val headers =
+            if (hfAccessToken.getToken() != null) {
+                HashMap(
+                    mapOf("Authorization" to "Bearer ${hfAccessToken.getToken()}"),
+                )
+            } else {
+                HashMap()
+            }
         val downloadId =
             ketch.download(
                 model.downloadUrl,
                 context.filesDir.absolutePath,
                 model.getFileName(),
+                headers = headers,
             )
         ketch
             .observeDownloadById(downloadId)

@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
 sealed interface ChatScreenUIEvent {
-    data object OnEditAPIKeyClick : ChatScreenUIEvent
+    data object OnEditCredentialsClick : ChatScreenUIEvent
 
     data object OnOpenDocsClick : ChatScreenUIEvent
 
@@ -98,7 +98,7 @@ class ChatViewModel(
                         dialogText = "Please enter a Gemini API key to use a LLM for generating responses.",
                         dialogPositiveButtonText = "Add API key",
                         onPositiveButtonClick = {
-                            onChatScreenEvent(ChatScreenUIEvent.OnEditAPIKeyClick)
+                            onChatScreenEvent(ChatScreenUIEvent.OnEditCredentialsClick)
                         },
                         dialogNegativeButtonText = "Open Gemini Console",
                         onNegativeButtonClick = {
@@ -153,7 +153,7 @@ class ChatViewModel(
                 }
             }
 
-            is ChatScreenUIEvent.OnEditAPIKeyClick -> {
+            is ChatScreenUIEvent.OnEditCredentialsClick -> {
                 viewModelScope.launch {
                     _navEventChannel.send(ChatNavEvent.ToEditAPIKeyScreen)
                 }

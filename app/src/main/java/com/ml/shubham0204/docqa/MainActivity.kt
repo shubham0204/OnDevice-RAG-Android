@@ -17,9 +17,8 @@ import com.ml.shubham0204.docqa.ui.screens.chat.ChatScreen
 import com.ml.shubham0204.docqa.ui.screens.chat.ChatViewModel
 import com.ml.shubham0204.docqa.ui.screens.docs.DocsScreen
 import com.ml.shubham0204.docqa.ui.screens.docs.DocsViewModel
-import com.ml.shubham0204.docqa.ui.screens.edit_api_key.EditAPIKeyScreen
+import com.ml.shubham0204.docqa.ui.screens.edit_credentials.EditCredentialsScreen
 import com.ml.shubham0204.docqa.ui.screens.local_models.LocalModelsScreen
-import com.ml.shubham0204.docqa.ui.screens.local_models.LocalModelsUIState
 import com.ml.shubham0204.docqa.ui.screens.local_models.LocalModelsViewModel
 import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
@@ -58,7 +57,7 @@ class MainActivity : ComponentActivity() {
                         onEvent = viewModel::onEvent,
                     )
                 }
-                composable<EditAPIKeyRoute> { EditAPIKeyScreen(onBackClick = { navHostController.navigateUp() }) }
+                composable<EditAPIKeyRoute> { EditCredentialsScreen(onBackClick = { navHostController.navigateUp() }) }
                 composable<LocalModelsRoute> { backStackEntry ->
                     val viewModel: LocalModelsViewModel =
                         koinViewModel(viewModelStoreOwner = backStackEntry)
