@@ -1,2 +1,2 @@
-- Initial release of `Android-Doc-QA`
-- The app allows users to ask questions on PDF/DOCX documents and get natural-language answers.
+- Allow use of local LLM models (with LiteRT) for document question-answering
+- Gated models can be downloaded by providing a HuggingFace access token to the app
