@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ml.shubham0204.docqa.data.LocalModel
+import com.ml.shubham0204.docqa.ui.components.AppAlertDialog
 import com.ml.shubham0204.docqa.ui.theme.DocQATheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
@@ -83,6 +84,7 @@ fun LocalModelsScreen(
                     },
                 )
                 DownloadDialogModel(uiState.downloadModelDialogState, onDismiss = {})
+                AppAlertDialog()
             }
         }
     }

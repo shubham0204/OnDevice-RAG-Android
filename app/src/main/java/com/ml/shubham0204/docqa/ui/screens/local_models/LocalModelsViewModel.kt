@@ -1,6 +1,7 @@
 package com.ml.shubham0204.docqa.ui.screens.local_models
 
 import android.content.Context
+import android.os.storage.StorageManager
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
@@ -10,6 +11,7 @@ import com.ketch.Status
 import com.ml.shubham0204.docqa.data.HFAccessToken
 import com.ml.shubham0204.docqa.data.LocalModel
 import com.ml.shubham0204.docqa.domain.llm.LiteRTAPI
+import com.ml.shubham0204.docqa.ui.components.createAlertDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.koin.android.annotation.KoinViewModel
 
 sealed class LocalModelsUIEvent {
@@ -43,6 +46,13 @@ data class DownloadModelDialogUIState(
     val showProgress: Boolean = false,
     val progress: Int = 0,
 )
+
+sealed interface DownloadPrecheckError {
+    data object InsufficientStorage : DownloadPrecheckError
+    data object APIKeyRequired : DownloadPrecheckError
+    data object ModelFileSizeUnknown : DownloadPrecheckError
+    data object AvailableStorageUnknown : DownloadPrecheckError
+}
 
 @KoinViewModel
 class LocalModelsViewModel(
@@ -120,9 +130,28 @@ class LocalModelsViewModel(
         when (event) {
             is LocalModelsUIEvent.OnModelDownloadClick -> {
                 viewModelScope.launch(Dispatchers.IO) {
-                    downloadModel(event.model)
+                    val error = checkIfStorageAvailable(event.model.downloadUrl)
+                    if (error != null) {
+                        val errorMessage = when (error) {
+                            DownloadPrecheckError.InsufficientStorage -> "The device does not have enough storage space to download the model."
+                            DownloadPrecheckError.APIKeyRequired -> "Downloading this model requires setting a HuggingFace API key."
+                            DownloadPrecheckError.ModelFileSizeUnknown -> "The model file-size cannot be determined. Either the model is not available on HF or the app is not able to connect to HF."
+                            DownloadPrecheckError.AvailableStorageUnknown -> "The available storage space on this device cannot be determined."
+                        }
+                        createAlertDialog(
+                            dialogTitle = "Error",
+                            dialogText = errorMessage,
+                            dialogPositiveButtonText = "Ok",
+                            onPositiveButtonClick = {},
+                            dialogNegativeButtonText = null,
+                            onNegativeButtonClick = null
+                        )
+                    } else {
+                        downloadModel(event.model)
+                    }
                 }
             }
+
             is LocalModelsUIEvent.OnUseModelClick -> {
                 if (liteRTAPI.isLoaded) {
                     liteRTAPI.unload()
@@ -132,6 +161,7 @@ class LocalModelsViewModel(
                     onEvent(LocalModelsUIEvent.RefreshModelsList)
                 }
             }
+
             is LocalModelsUIEvent.RefreshModelsList -> {
                 _uiState.update {
                     it.copy(
@@ -160,6 +190,33 @@ class LocalModelsViewModel(
             )
         }
 
+    private suspend fun checkIfStorageAvailable(modelUrl: String): DownloadPrecheckError? =
+        withContext(Dispatchers.IO) {
+            val client = OkHttpClient()
+            val request = Request.Builder()
+                .url(modelUrl)
+                .head()
+                .build()
+            val response = client.newCall(request).execute()
+
+            if (response.code == 401) return@withContext DownloadPrecheckError.APIKeyRequired
+
+            val fileSizeInBytes = response.headers["Content-Length"]?.toLong()
+            Log.d("Doc-QA", "Model file size calculated from HEAD request: $fileSizeInBytes")
+
+            val storageManager = context.getSystemService(Context.STORAGE_SERVICE) as StorageManager
+            val availableSpaceInBytes = context.getExternalFilesDir(null)?.let {
+                storageManager.getAllocatableBytes(storageManager.getUuidForPath(it))
+            }
+            Log.d("Doc-QA", "Available space on device: $availableSpaceInBytes")
+
+            if (availableSpaceInBytes == null) return@withContext DownloadPrecheckError.AvailableStorageUnknown
+            if (fileSizeInBytes == null) return@withContext DownloadPrecheckError.ModelFileSizeUnknown
+            if (fileSizeInBytes > availableSpaceInBytes) return@withContext DownloadPrecheckError.InsufficientStorage
+
+            return@withContext null
+        }
+
     private suspend fun downloadModel(model: LocalModel) {
         val headers =
             if (hfAccessToken.getToken() != null) {
@@ -185,7 +242,9 @@ class LocalModelsViewModel(
                         Status.QUEUED -> {
                             _uiState.update {
                                 it.copy(
-                                    downloadModelDialogState = it.downloadModelDialogState.copy(isDialogVisible = true),
+                                    downloadModelDialogState = it.downloadModelDialogState.copy(
+                                        isDialogVisible = true
+                                    ),
                                 )
                             }
                         }
@@ -193,7 +252,9 @@ class LocalModelsViewModel(
                         Status.PROGRESS -> {
                             _uiState.update {
                                 it.copy(
-                                    downloadModelDialogState = it.downloadModelDialogState.copy(progress = ketchDownload.progress),
+                                    downloadModelDialogState = it.downloadModelDialogState.copy(
+                                        progress = ketchDownload.progress
+                                    ),
                                 )
                             }
                         }
@@ -201,7 +262,9 @@ class LocalModelsViewModel(
                         Status.SUCCESS -> {
                             _uiState.update {
                                 it.copy(
-                                    downloadModelDialogState = it.downloadModelDialogState.copy(isDialogVisible = false),
+                                    downloadModelDialogState = it.downloadModelDialogState.copy(
+                                        isDialogVisible = false
+                                    ),
                                 )
                             }
                             onEvent(LocalModelsUIEvent.OnUseModelClick(model))
@@ -218,7 +281,9 @@ class LocalModelsViewModel(
                         Status.FAILED -> {
                             _uiState.update {
                                 it.copy(
-                                    downloadModelDialogState = it.downloadModelDialogState.copy(isDialogVisible = false),
+                                    downloadModelDialogState = it.downloadModelDialogState.copy(
+                                        isDialogVisible = false
+                                    ),
                                 )
                             }
                             withContext(Dispatchers.Main) {
