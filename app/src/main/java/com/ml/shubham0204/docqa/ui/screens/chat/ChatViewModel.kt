@@ -92,7 +92,7 @@ class ChatViewModel(
                         ).show()
                     return
                 }
-                if (!checkValidAPIKey()) {
+                if (!liteRTAPI.isLoaded && !checkValidAPIKey()) {
                     createAlertDialog(
                         dialogTitle = "Invalid API Key",
                         dialogText = "Please enter a Gemini API key to use a LLM for generating responses.",
@@ -126,7 +126,17 @@ class ChatViewModel(
                         Toast.makeText(context, "Using local model...", Toast.LENGTH_LONG).show()
                         liteRTAPI
                     } else {
-                        val apiKey = geminiAPIKey.getAPIKey() ?: throw Exception("Gemini API key is null")
+                        val apiKey = geminiAPIKey.getAPIKey()
+                        if (apiKey == null) {
+                            Toast.makeText(
+                                context,
+                                "No local model loaded and no Gemini API key set. Please load a local model or set your API key.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            _chatScreenUIState.value =
+                                _chatScreenUIState.value.copy(isGeneratingResponse = false)
+                            return
+                        }
                         Toast.makeText(context, "Using Gemini cloud model...", Toast.LENGTH_LONG).show()
                         GeminiRemoteAPI(apiKey)
                     }

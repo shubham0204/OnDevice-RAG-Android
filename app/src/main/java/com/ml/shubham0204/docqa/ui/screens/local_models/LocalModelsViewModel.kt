@@ -76,9 +76,9 @@ class LocalModelsViewModel(
                             downloadUrl = "https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_seq128_q8_ekv4096.task",
                         ),
                         LocalModel(
-                            name = "Qwen2.5 3B Instruct Q8",
-                            description = "A Qwen family model series",
-                            downloadUrl = "https://huggingface.co/litert-community/Qwen2.5-3B-Instruct/resolve/main/Qwen2.5-3B-Instruct_multi-prefill-seq_q8_ekv1280.task",
+                            name = "Qwen3 4B Thinking Q4",
+                            description = "Qwen3 4B with thinking/reasoning capabilities",
+                            downloadUrl = "https://huggingface.co/harithoppil/qwen3-4b-thinking-litert/resolve/main/qwen3_thinking_4b_q4_block128_ekv2048.task",
                         ),
                         LocalModel(
                             name = "Phi 4 Mini Instruct Q8",
